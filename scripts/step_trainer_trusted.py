@@ -13,30 +13,30 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-# 1. Read step trainer landing and customer trusted from Catalog
+# 1. Read step trainer landing and customers curated from Glue Catalog
 step_trainer_landing_node = glueContext.create_dynamic_frame.from_catalog(
     database="default",
     table_name="step_trainer_landing",
     transformation_ctx="step_trainer_landing_node"
 )
 
-customer_trusted_node = glueContext.create_dynamic_frame.from_catalog(
+customer_curated_node = glueContext.create_dynamic_frame.from_catalog(
     database="default",
-    table_name="customer_trusted",
-    transformation_ctx="customer_trusted_node"
+    table_name="customers_curated",
+    transformation_ctx="customer_curated_node"
 )
 
 step_df = step_trainer_landing_node.toDF()
-cust_df = customer_trusted_node.toDF()
+cust_curated_df = customer_curated_node.toDF()
 
-# 2. Inner Join on serialnumber to retain readings only for consented customers
+# 2. Inner Join step_trainer_landing with customers_curated on serialnumber
 joined_df = step_df.join(
-    cust_df,
-    step_df["serialnumber"] == cust_df["serialnumber"],
+    cust_curated_df,
+    step_df["serialnumber"] == cust_curated_df["serialnumber"],
     "inner"
 )
 
-# 3. Select original step trainer fields
+# 3. Select only the original step trainer fields
 step_trainer_trusted_df = joined_df.select(
     step_df["sensorreadingtime"],
     step_df["serialnumber"],
